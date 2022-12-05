@@ -13,8 +13,8 @@ class CustomUserAdmin(UserAdmin):
     list_display = [
         "email", "username", "is_staff",
     ]
-    # fieldsets = UserAdmin.fieldsets + ((None, {"fields": ("pin",)}),)
-    # add_fieldsets = UserAdmin.add_fieldsets + ((None, {"fields": ("pin",)}),)
+    fieldsets = UserAdmin.fieldsets + ((None, {"fields": ("pin",)}),)
+    add_fieldsets = UserAdmin.add_fieldsets + ((None, {"fields": ("pin",)}),)
 
 
 admin.site.register(CustomUser, CustomUserAdmin)
