@@ -9,8 +9,11 @@ class CustomUserSerializer(CountryFieldMixin, serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ("id", "email", "first_name", "last_name", "country", "phone_number")
+        fields = ("id", "email", "first_name", "last_name", "country", "phone_number", \
+                  "date_of_birth", "gender", "address",)
 
 
-class PhoneNumberSerializer(serializers.Serializer):
-    phone_number = PhoneNumberField()
+class ImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ("image",)
