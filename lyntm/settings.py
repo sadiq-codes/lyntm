@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "dj_rest_auth.registration",
     "django_countries",
     "phonenumber_field",
+    "django_rest_passwordreset",
 
     # Internal
     'users.apps.UsersConfig',
@@ -131,6 +132,15 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+DJANGO_REST_PASSWORDRESET_TOKEN_CONFIG = {
+    "CLASS": "django_rest_passwordreset.tokens.RandomNumberTokenGenerator",
+    "OPTIONS": {
+        "min_number": 1500,
+        "max_number": 9999
+    }
+}
+
+DJANGO_REST_MULTITOKENAUTH_RESET_TOKEN_EXPIRY_TIME = 0.1
 # permissions
 REST_FRAMEWORK = {"DEFAULT_PERMISSION_CLASSES": [
     "rest_framework.permissions.IsAuthenticated",

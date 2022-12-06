@@ -15,12 +15,16 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from dj_rest_auth.registration.views import VerifyEmailView
+# from dj_rest_auth.registration.urls import
+from dj_rest_auth.views import PasswordResetConfirmView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    # path("users/", include("users.urls"))
-    path("api-auth/", include("rest_framework.urls")),
-    path("dj-rest-auth/", include("dj_rest_auth.urls")),
-    path("dj-rest-auth/registration/",
+    path("", include("users.urls")),
+    path("api-auth/", include("rest_framework.urls")),  # Browserble Api login
+    path("rest-auth/", include("dj_rest_auth.urls")),
+    path("rest-auth/registration/",
          include("dj_rest_auth.registration.urls")),
+    path("rest-auth/password_reset/", include("django_rest_passwordreset.urls")),
 ]
