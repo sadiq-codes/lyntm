@@ -10,15 +10,20 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.generics import get_object_or_404
 from rest_framework.views import APIView
-# from dj_rest_auth.registration.views import  Re
+from dj_rest_auth.registration.views import SocialLoginView, SocialConnectView
+
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
+from allauth.socialaccount.providers.twitter.views import TwitterOAuthAdapter
+from dj_rest_auth.social_serializers import TwitterLoginSerializer, TwitterConnectSerializer
 
 from django_rest_passwordreset.signals import reset_password_token_created
 
 from .models import CustomUser
 from .serializers import CustomUserSerializer, ImageSerializer
 
-account_sid = "AC517ca8eef720380cf2d604dce3650ab9"
-auth_token = "dc82de7628d8cd33847e64ca5cac1dfd"
+account_sid = ""
+auth_token = ""
 client = Client(account_sid, auth_token)
 
 
@@ -105,3 +110,29 @@ def sms_password_reset_token_created(sender, instance, reset_password_token, *ar
     except TwilioRestException as err:
         # Implement your fallback code here
         print(err)
+
+
+class GoogleLogin(SocialLoginView):
+    adapter_class = GoogleOAuth2Adapter
+
+
+class GoogleLinkUp(SocialConnectView):
+    adapter_class = GoogleOAuth2Adapter
+
+
+class FacebookLogin(SocialLoginView):
+    adapter_class = FacebookOAuth2Adapter
+
+
+class FacebookLinkUp(SocialConnectView):
+    adapter_class = FacebookOAuth2Adapter
+
+
+class TwitterLogin(SocialLoginView):
+    adapter_class = TwitterOAuthAdapter
+    serializer_class = TwitterLoginSerializer
+
+
+class TwitterLinkUp(SocialConnectView):
+    serializer_class = TwitterConnectSerializer
+    adapter_class = TwitterOAuthAdapter
