@@ -9,6 +9,7 @@ from twilio.base.exceptions import TwilioRestException
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.generics import get_object_or_404
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.views import APIView
 from dj_rest_auth.registration.views import SocialLoginView, SocialConnectView
 
@@ -22,8 +23,8 @@ from django_rest_passwordreset.signals import reset_password_token_created
 from .models import CustomUser
 from .serializers import CustomUserSerializer, ImageSerializer
 
-account_sid = ""
-auth_token = ""
+account_sid = "qwdnwobfo1h3uo13fjq"
+auth_token = "r3ji10h3r013803r1qj"
 client = Client(account_sid, auth_token)
 
 
