@@ -54,9 +54,11 @@ INSTALLED_APPS = [
     "django_countries",
     "phonenumber_field",
     "django_rest_passwordreset",
+    "djmoney",
 
     # Internal
     'users.apps.UsersConfig',
+    "wallets.apps.WalletsConfig"
 ]
 
 MIDDLEWARE = [
