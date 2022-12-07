@@ -12,6 +12,20 @@ from transactions.models import Transaction
 # Create your models here.
 
 
+def make_transfer(amount, sender, receiver):
+    type_list = [str, int, bool]
+    if type(amount) in type_list:
+        amount = Money(Decimal(amount), "USD")
+
+    if amount > sender.balance:
+        raise ValidationError("Insufficient funds")
+
+    sender.balance -= amount
+    receiver.balance += amount
+    sender.save()
+    receiver.save()
+
+
 class Wallet(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='wallet')
     account_number = models.CharField(max_length=11, db_index=True)
@@ -61,9 +75,8 @@ class Wallet(models.Model):
         return check_password(password=pin, encoded=self.pin)
 
     @classmethod
-    def transfer(cls, sender, receiver, amount, category, notes, pin, schedule=None):
+    def transfer(cls, sender, receiver, amount, category, notes, schedule=None):
         """
-
         :param sender:
         :param notes:
         :param category:
@@ -72,29 +85,33 @@ class Wallet(models.Model):
         :param schedule:
         :type pin: object
         """
-        amount = Money(Decimal(amount), "USD")
-        if not sender.check_pin(pin):
-            print(pin)
-            raise ValidationError("incorrect wallet pin")
-
-        if amount > sender.balance:
-            raise ValidationError("Insufficient funds")
-
-        if schedule:
-            pass
-
-        sender.balance - amount
-        # receiver.balance += amount
-
+        make_transfer(amount, sender, receiver)
         Transaction.objects.create(amount=amount,
                                    sender=sender,
                                    receiver=receiver,
                                    transaction_category=category,
                                    notes=notes,
-                                   transaction_status="Completed")
+                                   transaction_status="COMPLETED")
 
-        sender.save()
-        receiver.save()
+    @classmethod
+    def request_payment(cls, sender, receiver, amount, category, notes):
+        Transaction.objects.create(amount=amount,
+                                   sender=sender,
+                                   receiver=receiver,
+                                   transaction_category=category,
+                                   notes=notes,
+                                   transaction_status="REQUESTED")
+
+    @staticmethod
+    def accept_request(pk: object) -> object:
+        transaction = Transaction.objects.get(pk=pk)
+        make_transfer(transaction.amount, transaction.sender, transaction.receiver)
+        transaction.transaction_status = "COMPLETED"
+        transaction.save()
+
+    @classmethod
+    def schedule_payment(cls, sender, receiver, amount, category, notes):
+        pass
 
 
 class Service(models.Model):

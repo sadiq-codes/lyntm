@@ -1,9 +1,9 @@
 from django.db import models
 from djmoney.models.fields import MoneyField
 
-
 # Create your models here.
 from .utils import generate_transaction_ref_code
+
 
 class Transaction(models.Model):
     TRANSACTION_TYPE = (
@@ -14,7 +14,8 @@ class Transaction(models.Model):
         ("CREATED", "Created"),
         ("COMPLETED", "Completed"),
         ("SCHEDULED", "Scheduled"),
-        ("REQUESTED", "Requested")
+        ("REQUESTED", "Requested"),
+        ("CANCELLED", "Cancelled")
     )
     TRANSACTION_CATEGORY = (
         ("FAMILY", "Family"),
