@@ -1,8 +1,12 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from djmoney.money import Money
 from djmoney.models.fields import MoneyField
+from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.contrib.auth.hashers import check_password, make_password
+
+from transactions.models import Transaction
 
 
 # Create your models here.
@@ -19,6 +23,9 @@ class Wallet(models.Model):
         if not self.account_number:
             self.account_number = self.generate_account_number()
         return super(Wallet, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.user}'s wallet"
 
     @staticmethod
     def get_last_account_number():
@@ -53,26 +60,40 @@ class Wallet(models.Model):
     def check_pin(self, pin):
         return check_password(password=pin, encoded=self.pin)
 
-    def transfer(self, receiver, amount, category, notes, pin, schedule=None):
+    @classmethod
+    def transfer(cls, sender, receiver, amount, category, notes, pin, schedule=None):
         """
 
+        :param sender:
+        :param notes:
+        :param category:
         :param amount:
         :param receiver:
         :param schedule:
         :type pin: object
         """
-        if not self.check_pin(pin):
+        amount = Money(Decimal(amount), "USD")
+        if not sender.check_pin(pin):
+            print(pin)
             raise ValidationError("incorrect wallet pin")
 
-        if self.balance < amount:
+        if amount > sender.balance:
             raise ValidationError("Insufficient funds")
 
         if schedule:
             pass
 
-        self.balance -= amount
-        receiver.balance += amount
-        self.save()
+        sender.balance - amount
+        # receiver.balance += amount
+
+        Transaction.objects.create(amount=amount,
+                                   sender=sender,
+                                   receiver=receiver,
+                                   transaction_category=category,
+                                   notes=notes,
+                                   transaction_status="Completed")
+
+        sender.save()
         receiver.save()
 
 

@@ -58,7 +58,8 @@ INSTALLED_APPS = [
 
     # Internal
     'users.apps.UsersConfig',
-    "wallets.apps.WalletsConfig"
+    "wallets.apps.WalletsConfig",
+    "transactions.apps.TransactionsConfig"
 ]
 
 MIDDLEWARE = [
