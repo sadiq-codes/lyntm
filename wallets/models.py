@@ -53,15 +53,28 @@ class Wallet(models.Model):
     def check_pin(self, pin):
         return check_password(password=pin, encoded=self.pin)
 
-    @classmethod
-    def transfer(cls, sender, receiver, amount, category, notes, schedule=None):
+    def transfer(self, receiver, amount, category, notes, pin, schedule=None):
+        """
 
-        if sender.balance < amount:
+        :param amount:
+        :param receiver:
+        :param schedule:
+        :type pin: object
+        """
+        if not self.check_pin(pin):
+            raise ValidationError("incorrect wallet pin")
+
+        if self.balance < amount:
             raise ValidationError("Insufficient funds")
 
         if schedule:
             pass
 
-        sender.balance -= amount
-        se
+        self.balance -= amount
+        receiver.balance += amount
+        self.save()
+        receiver.save()
 
+
+class Service(models.Model):
+    pass
