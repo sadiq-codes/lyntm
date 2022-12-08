@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.hashers import check_password, make_password
 
 from transactions.models import Transaction
+from transactions.utils import generate_service_id
 
 
 # Create your models here.
@@ -115,4 +116,24 @@ class Wallet(models.Model):
 
 
 class Service(models.Model):
-    pass
+    SERVICES_TYPE = (
+        ("BILL", "Bill"),
+        ("INSURANCE", "Insurance"),
+        ("OPTION", "Option")
+    )
+    SERVICES_STATUS = (
+        ('PAID', "Paid"),
+        ("UNPAID", "Unpaid"),
+        ("Failed", "failed")
+    )
+    name = models.CharField(max_length=250)
+    wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name='service')
+    customer_id = models.CharField(max_length=11, blank=True, null=True)
+    service_type = models.CharField(choices=SERVICES_TYPE, max_length=55, blank=True, null=True)
+    service_status = models.CharField(choices=SERVICES_STATUS, max_length=55, blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.customer_id:
+            self.customer_id = generate_service_id()
+        return super(Service, self).save(*args, **kwargs)
+
