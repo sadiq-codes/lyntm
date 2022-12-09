@@ -5,4 +5,4 @@ from .models import Transaction
 
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
-    list_display = ["sender", "receiver", "amount", "reference", "transaction_status", ]
+    list_display = ["sender_wallet", "receiver_wallet", "transaction_type", "amount", "reference", "transaction_status", ]

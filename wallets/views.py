@@ -61,7 +61,7 @@ def transfer_funds(request):
     if serializer.is_valid():
         data = get_data(serializer)
         sender.transfer(sender, data.get('receiver'), data.get('amount'),
-                        data.get('category'), data.get('notes'))
+                        data.get('category'), data.get('notes'), data.get('schedule'))
         return Response(serializer.data, status=status.HTTP_200_OK)
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -96,3 +96,4 @@ def accept_requested_funds(request, pk):
     wallet = get_object_or_404(Wallet, user=request.user)
     wallet.accept_request(pk)
     return Response({"status": "success", "message": "Funds Transferred"}, status=status.HTTP_200_OK)
+

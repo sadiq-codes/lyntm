@@ -5,9 +5,13 @@ from djmoney.models.fields import MoneyField
 from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.contrib.auth.hashers import check_password, make_password
+from datetime import datetime, timedelta
+from django.db.models import Sum, Q
 
 from transactions.models import Transaction
 from transactions.utils import generate_service_id
+
+from .tasks import schedule_payment_task
 
 
 # Create your models here.
@@ -15,6 +19,7 @@ from transactions.utils import generate_service_id
 
 def make_transfer(amount, sender, receiver):
     type_list = [str, int, bool]
+    # Check if type of amount is in list and convert it to money object
     if type(amount) in type_list:
         amount = Money(Decimal(amount), "USD")
 
@@ -75,6 +80,22 @@ class Wallet(models.Model):
     def check_pin(self, pin):
         return check_password(password=pin, encoded=self.pin)
 
+    @property
+    def get_sender_transactions(self):
+        # Query the database to get all transactions where the wallet is the sender
+        return Transaction.objects.filter(sender_wallet=self)
+
+    @property
+    def get_receiver_transactions(self):
+        # Query the database to get all transactions where the wallet is the sender
+        return Transaction.objects.filter(receiver_wallet=self)
+
+    @property
+    def get_all_user_transactions(self):
+        # Query the database to get all transactions where the wallet is the sender and receiver
+        transactions = self.get_sender_transactions | self.get_receiver_transactions
+        return transactions
+
     @classmethod
     def transfer(cls, sender, receiver, amount, category, notes, schedule=None):
         """
@@ -86,13 +107,17 @@ class Wallet(models.Model):
         :param schedule:
         :type pin: object
         """
-        make_transfer(amount, sender, receiver)
-        Transaction.objects.create(amount=amount,
-                                   sender=sender,
-                                   receiver=receiver,
-                                   transaction_category=category,
-                                   notes=notes,
-                                   transaction_status="COMPLETED")
+        if schedule:
+            Wallet.schedule_payment(sender, receiver, amount, category, notes, schedule)
+        else:
+            make_transfer(amount, sender, receiver)
+            Transaction.objects.create(amount=amount,
+                                       sender=sender,
+                                       receiver=receiver,
+                                       transaction_category=category,
+                                       transaction_type="DEBIT",
+                                       notes=notes,
+                                       transaction_status="COMPLETED")
 
     @classmethod
     def request_payment(cls, sender, receiver, amount, category, notes):
@@ -100,6 +125,7 @@ class Wallet(models.Model):
                                    sender=sender,
                                    receiver=receiver,
                                    transaction_category=category,
+                                   transaction_type="CREDIT",
                                    notes=notes,
                                    transaction_status="REQUESTED")
 
@@ -111,8 +137,48 @@ class Wallet(models.Model):
         transaction.save()
 
     @classmethod
-    def schedule_payment(cls, sender, receiver, amount, category, notes):
-        pass
+    def schedule_payment(cls, sender, receiver, amount, category, notes, schedule):
+        print("i enter model schedule")
+        transaction = Transaction.objects.create(amount=amount,
+                                                 sender=sender,
+                                                 receiver=receiver,
+                                                 transaction_category=category,
+                                                 notes=notes,
+                                                 schedule=schedule,
+                                                 transaction_status="SCHEDULED")
+        print(transaction.id)
+        schedule_payment_task(transaction.id, date_string=schedule)
+
+    def get_statistics(self, time_period):
+        # Retrieve the relevant income and expense data from the database using the Wallet object and time period
+        if time_period == 'today':
+            start_date = datetime.now() - timedelta(days=1)
+            end_date = datetime.now()
+        elif time_period == 'week':
+            start_date = datetime.now() - timedelta(days=7)
+            end_date = datetime.now()
+        elif time_period == 'month':
+            start_date = datetime.now() - timedelta(days=30)
+            end_date = datetime.now()
+        elif time_period == 'year':
+            start_date = datetime.now() - timedelta(days=365)
+            end_date = datetime.now()
+        else:
+            start_date = datetime.min
+            end_date = datetime.max
+        transactions = self.get_all_user_transactions.all()
+
+        transactions = transactions.filter(transaction_date__range=(start_date, end_date)).order_by(
+            'transaction_date')
+
+        # transactions = transactions.filter(transaction_type=Transaction.)
+
+        transactions_by_day = transactions.values('transaction_date').annotate(
+            total_income=Sum('amount', filter=Q(transaction_type='CREDIT')),
+            total_expense=Sum('amount',
+                              filter=Q(transaction_type='DEBIT')))
+
+        return transactions_by_day
 
 
 class Service(models.Model):
@@ -136,4 +202,3 @@ class Service(models.Model):
         if not self.customer_id:
             self.customer_id = generate_service_id()
         return super(Service, self).save(*args, **kwargs)
-

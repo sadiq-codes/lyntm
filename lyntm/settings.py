@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "phonenumber_field",
     "django_rest_passwordreset",
     "djmoney",
+    "django_celery_beat",
 
     # Internal
     'users.apps.UsersConfig',
@@ -157,7 +158,7 @@ REST_FRAMEWORK = {"DEFAULT_PERMISSION_CLASSES": [
     ],
 }
 
-CORS_ORIGIN_WHITELIST = ( "http://localhost:3000", "http://localhost:8000", )
+CORS_ORIGIN_WHITELIST = ("http://localhost:3000", "http://localhost:8000",)
 CSRF_TRUSTED_ORIGINS = ["http://localhost:3000"]
 
 # Internationalization
@@ -186,3 +187,7 @@ MEDIA_ROOT = [BASE_DIR, 'media/']
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# Celery config
+CELERY_BROKER_URL = "redis://localhost:6379"
+CELERY_RESULT_BACKEND = "redis://localhost:6379"
