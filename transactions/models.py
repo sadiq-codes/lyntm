@@ -52,35 +52,3 @@ class Transaction(models.Model):
             return "Credit"
         else:
             return "N/A"
-
-    @staticmethod
-    def get_statistics(wallet, time_period):
-        # Retrieve the relevant income and expense data from the database using the Wallet object and time period
-        if time_period == 'week':
-            start_date = datetime.now() - timedelta(days=7)
-            end_date = datetime.now()
-        elif time_period == 'month':
-            start_date = datetime.now() - timedelta(days=30)
-            end_date = datetime.now()
-        elif time_period == 'year':
-            start_date = datetime.now() - timedelta(days=365)
-            end_date = datetime.now()
-        else:
-            start_date = datetime.min
-            end_date = datetime.max
-        transactions = wallet.get_all_user_transactions.all()
-
-        transactions = transactions.filter(transaction_date__range=(start_date, end_date)).order_by(
-            'transaction_date')
-        print(transactions)
-
-        transactions = transactions.filter(transaction_type=
-                                           Transaction.get_transaction_type_for_wallet(wallet))
-
-        transactions_by_day = transactions.values('transaction_date').annotate(
-            total_income=Sum('amount', filter=Q(transaction_type='CREDIT')),
-            total_expense=Sum('amount',
-                              filter=Q(transaction_type='DEBIT')))
-        print(transactions)
-
-        return transactions_by_day

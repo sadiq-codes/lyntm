@@ -1,15 +1,20 @@
-from django.shortcuts import render
+import qrcode
+from django.http import HttpResponse
+from django.views import View
+from qrcode import QRCode
 from rest_framework import status, generics, filters
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.generics import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-# Create your views here.
 
-from transactions.serializers import TransactionSerializer
 from transactions.models import Transaction
+from transactions.serializers import TransactionSerializer
 from .models import Wallet
 from .serializers import PinSerializer, WalletSerializer
+
+
+# Create your views here.
 
 
 @api_view(['POST'])
@@ -97,3 +102,21 @@ def accept_requested_funds(request, pk):
     wallet.accept_request(pk)
     return Response({"status": "success", "message": "Funds Transferred"}, status=status.HTTP_200_OK)
 
+
+class QRCodeView(View):
+
+    def get(self, request, **kwargs):
+        # Create a QR code object
+        qr = QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(kwargs.get("account_number"))
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="blue", back_color="white")
+        response = HttpResponse(content_type="image/png")
+        img.save(response, "PNG")
+
+        return response

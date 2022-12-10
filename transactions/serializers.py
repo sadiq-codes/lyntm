@@ -11,9 +11,9 @@ class TransactionSerializer(serializers.ModelSerializer):
         model = Transaction
         fields = ["id", "reference", "sender_wallet", "receiver_wallet", "amount", "transaction_date",
                   "transaction_category", "transaction_status", "transaction_type", "notes", "schedule"]
-    #
-    # def get_transaction_type(self, obj):
-    #     request = self.context.get("request")
-    #     wallet = request.user.wallet
-    #     return obj.get_transaction_type_for_wallet(wallet)
-    #
+
+    def get_transaction_type(self, obj):
+        request = self.context.get("request")
+        wallet = request.user.wallet
+        return obj.get_transaction_type_for_wallet(wallet)
+
