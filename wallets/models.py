@@ -51,7 +51,7 @@ class Wallet(models.Model):
     def get_last_account_number():
         # Get the last account number
         wallet = Wallet.objects.last()
-        return wallet.account_number
+        return wallet.account_number if wallet is not None else 0
 
     @staticmethod
     def account_number_exists(account_number):
@@ -59,7 +59,7 @@ class Wallet(models.Model):
 
     def generate_account_number(self):
         # Get the last used account number from the database
-        last_account_number = self.get_last_account_number() or 0
+        last_account_number = self.get_last_account_number()
 
         # Increment the last used account number by 1
         new_account_number = int(last_account_number) + 1
