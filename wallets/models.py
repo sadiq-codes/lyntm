@@ -1,8 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-from djmoney.money import Money
 from djmoney.models.fields import MoneyField
-from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.contrib.auth.hashers import check_password, make_password
 from datetime import datetime, timedelta
@@ -12,24 +10,10 @@ from transactions.models import Transaction
 from transactions.utils import generate_service_id
 
 from .tasks import schedule_payment_task
+from .utils import check_amount, make_transfer
 
 
 # Create your models here.
-
-
-def make_transfer(amount, sender, receiver):
-    type_list = [str, int, bool]
-    # Check if type of amount is in list and convert it to money object
-    if type(amount) in type_list:
-        amount = Money(Decimal(amount), "USD")
-
-    if amount > sender.balance:
-        raise ValidationError("Insufficient funds")
-
-    sender.balance -= amount
-    receiver.balance += amount
-    sender.save()
-    receiver.save()
 
 
 class Wallet(models.Model):
@@ -95,6 +79,36 @@ class Wallet(models.Model):
         # Query the database to get all transactions where the wallet is the sender and receiver
         transactions = self.get_sender_transactions | self.get_receiver_transactions
         return transactions
+
+    @classmethod
+    def deposit(cls, wallet, amount, category, notes):
+        amount = check_amount(amount)
+
+        wallet.balance += amount
+        wallet.save()
+        Transaction.objects.create(amount=amount,
+                                   receiver=wallet,
+                                   transaction_category=category,
+                                   transaction_type="CREDIT",
+                                   notes=notes,
+                                   transaction_status="COMPLETED")
+
+    @classmethod
+    def withdraw(cls, wallet, amount, category, notes):
+        amount = check_amount(amount)
+
+        if amount > wallet.balance:
+            raise ValidationError("Insufficient account balance,"
+                                  " please try amount less than your balance")
+
+        wallet.balance -= amount
+        wallet.save()
+        Transaction.objects.create(amount=amount,
+                                   sender=wallet,
+                                   transaction_category=category,
+                                   transaction_type="DEBIT",
+                                   notes=notes,
+                                   transaction_status="COMPLETED")
 
     @classmethod
     def transfer(cls, sender, receiver, amount, category, notes, schedule=None):

@@ -58,14 +58,26 @@ def get_data(serializer):
     return dict(receiver=receiver, amount=amount, category=category, notes=notes, schedule=schedule)
 
 
+@api_view(["POST"])
+@permission_classes((IsAuthenticated,))
+def withdraw_funds(request):
+    pass
+
+
+@api_view(["POST"])
+@permission_classes((IsAuthenticated,))
+def deposit_funds(request):
+    pass
+
+
 @api_view(['POST'])
 @permission_classes((IsAuthenticated,))
 def transfer_funds(request):
-    sender = get_object_or_404(Wallet, user=request.user)
+    wallet = get_object_or_404(Wallet, user=request.user)
     serializer = TransactionSerializer(data=request.data)
     if serializer.is_valid():
         data = get_data(serializer)
-        sender.transfer(sender, data.get('receiver'), data.get('amount'),
+        wallet.transfer(wallet, data.get('receiver'), data.get('amount'),
                         data.get('category'), data.get('notes'), data.get('schedule'))
         return Response(serializer.data, status=status.HTTP_200_OK)
     else:
@@ -75,11 +87,11 @@ def transfer_funds(request):
 @api_view(['POST'])
 @permission_classes((IsAuthenticated,))
 def request_funds(request):
-    sender = get_object_or_404(Wallet, user=request.user)
+    wallet = get_object_or_404(Wallet, user=request.user)
     serializer = TransactionSerializer(data=request.data)
     if serializer.is_valid():
         data = get_data(serializer)
-        sender.request_payment(sender, data.get('receiver'), data.get('amount'),
+        wallet.request_payment(wallet, data.get('receiver'), data.get('amount'),
                                data.get('category'), data.get('notes'))
         return Response(serializer.data, status=status.HTTP_200_OK)
     else:
