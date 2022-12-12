@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from transactions.models import Transaction
 from transactions.serializers import TransactionSerializer
 from .models import Wallet
-from .serializers import PinSerializer, WalletSerializer
+from .serializers import PinSerializer, WalletSerializer, DepositSerializer
 
 
 # Create your views here.
@@ -24,9 +24,9 @@ def set_wallet_pin(request):
     serializer = PinSerializer(data=request.data)
     if serializer.is_valid():
         wallet.set_pin(serializer.data.get("pin"))
-        return Response({"status": "success", "message": "Pin set successfully"}, status=status.HTTP_200_OK)
+        return Response({"status": "success", "data": "Pin set successfully"}, status=status.HTTP_200_OK)
     else:
-        return Response({"status": "failed", "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
@@ -36,10 +36,10 @@ def verify_wallet_pin(request):
     serializer = PinSerializer(data=request.data)
     if serializer.is_valid():
         if wallet.check_pin(serializer.data.get("pin")):
-            return Response({"status": "success", "message": "Pin verified"}, status=status.HTTP_200_OK)
-        return Response({"status": "failed", "message": "incorrect wallet pin"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"data": "Pin verified"}, status=status.HTTP_200_OK)
+        return Response({"data": "incorrect wallet pin"}, status=status.HTTP_400_BAD_REQUEST)
     else:
-        return Response({"status": "failed", "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class WalletDetailView(generics.RetrieveAPIView):
@@ -61,13 +61,33 @@ def get_data(serializer):
 @api_view(["POST"])
 @permission_classes((IsAuthenticated,))
 def withdraw_funds(request):
-    pass
+    wallet = get_object_or_404(Wallet, user=request.user)
+    serializer = DepositSerializer(data=request.data)
+    if serializer.is_valid():
+        data = get_data(serializer)
+        wallet.withdraw(wallet, data.get('amount'),
+                        data.get('category'), data.get('notes'), )
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
 @permission_classes((IsAuthenticated,))
 def deposit_funds(request):
-    pass
+    wallet = Wallet.objects.get(user=request.user)
+    wallet = get_object_or_404(Wallet, user=request.user)
+    serializer = DepositSerializer(data=request.data)
+    if serializer.is_valid():
+        data = get_data(serializer)
+
+        wallet.deposit(wallet, data.get('amount'),
+                       data.get('category'), data.get('notes'), )
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# {"amount": 5000, "transaction_category": "", "notes": "Thank you"}
 
 
 @api_view(['POST'])
@@ -112,7 +132,7 @@ class RequestedFunds(generics.ListAPIView):
 def accept_requested_funds(request, pk):
     wallet = get_object_or_404(Wallet, user=request.user)
     wallet.accept_request(pk)
-    return Response({"status": "success", "message": "Funds Transferred"}, status=status.HTTP_200_OK)
+    return Response({"data": "Funds Transferred"}, status=status.HTTP_200_OK)
 
 
 class QRCodeView(View):

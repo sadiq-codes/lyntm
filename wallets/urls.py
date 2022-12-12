@@ -1,6 +1,8 @@
 from django.urls import path
 from .views import set_wallet_pin, verify_wallet_pin, WalletDetailView, \
-    transfer_funds, request_funds, RequestedFunds, accept_requested_funds, QRCodeView
+    transfer_funds, request_funds, RequestedFunds, accept_requested_funds, QRCodeView, \
+    deposit_funds, withdraw_funds
+
 
 urlpatterns = [
     path('set-pin/', set_wallet_pin, name="set_pin"),
@@ -11,4 +13,6 @@ urlpatterns = [
     path('request/list/', RequestedFunds.as_view(), name="request_list"),
     path('request/accept/<int:pk>/', accept_requested_funds, name="accept_requested_funds"),
     path('qrcode/<account_number>', QRCodeView.as_view(), name="transaction_qrcode"),
+    path('deposit/', deposit_funds, name="deposit-funds"),
+    path('withdraw/', withdraw_funds, name="withdraw-funds")
 ]

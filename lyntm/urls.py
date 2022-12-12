@@ -29,7 +29,7 @@ urlpatterns = [
     path("rest-auth/registration/",
          include("dj_rest_auth.registration.urls")),
     path("rest-auth/password_reset/", include("django_rest_passwordreset.urls")),
-    path("wallet/", include("wallets.urls")),
+    path("wallets/", include("wallets.urls")),
     path("transactions/", include("transactions.urls"))
 ]
 
